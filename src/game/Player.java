@@ -39,7 +39,7 @@ public class Player {
     public void jump() {
         if (!isJumping) {
             isJumping = true;
-            jumpSpeed = -22; // Set initial jump speed
+            jumpSpeed = -24; // Set initial jump speed
         }
     }
 

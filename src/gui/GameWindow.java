@@ -10,47 +10,112 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator; // Import Iterator
+import java.util.List;
 import game.Player;
 import game.Obstacle;
 
 public class GameWindow extends JFrame implements KeyListener {
-    private GamePanel gamePanel; // The JPanel that will handle rendering
+    private GamePanel gamePanel;
     private Player player;
+    private List<Obstacle> obstacles;
+    private int minObstacleSpacing = 300;
+    private long lastObstacleAddedTime;
+    private long obstacleSpawnDelay = 3000;
+    private int score = 0;
 
-    public GameWindow(Player player, Obstacle obstacle) {
+    public GameWindow(Player player) {
         this.player = player;
 
-        // Create a GamePanel for drawing the player and background
-        gamePanel = new GamePanel(player, obstacle);
+        // Start with only one obstacle
+        obstacles = new ArrayList<>();
+        obstacles.add(new Obstacle(800, 390));
 
-        // Set up the window (JFrame)
+        lastObstacleAddedTime = System.currentTimeMillis();
+
+        gamePanel = new GamePanel(player, obstacles);
+
         setTitle("Obstacle Jumping Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
         setResizable(false);
-        add(gamePanel); // Add the GamePanel to the JFrame
+        add(gamePanel);
         setVisible(true);
 
-        // Add KeyListener to capture keyboard inputs
         addKeyListener(this);
     }
 
-    // Method to update the game window (repaint the panel)
     public void updateGameWindow() {
-        gamePanel.updateGamePanel(); // Delegate the update to the GamePanel
+        for (Obstacle obstacle : obstacles) {
+            obstacle.updatePosition();
+        }
+
+        checkCollisions();
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastObstacleAddedTime > obstacleSpawnDelay) {
+            if (obstacles.size() < 3) {
+                addNewObstacle();
+            }
+            lastObstacleAddedTime = currentTime;
+        }
+
+        gamePanel.updateGamePanel();
     }
 
-    // Inner class GamePanel extending JPanel for custom painting
+    private void addNewObstacle() {
+        int newObstacleX;
+        boolean validPosition = false;
+
+        while (!validPosition) {
+            newObstacleX = 800 + (int) (Math.random() * 400);
+
+            validPosition = true;
+            for (Obstacle obstacle : obstacles) {
+                if (Math.abs(newObstacleX - obstacle.getX()) < minObstacleSpacing) {
+                    validPosition = false;
+                    break;
+                }
+            }
+
+            if (validPosition) {
+                obstacles.add(new Obstacle(newObstacleX, 390));
+            }
+        }
+    }
+
+    private void checkCollisions() {
+        Iterator<Obstacle> iterator = obstacles.iterator(); // Use Iterator to safely remove obstacles
+        while (iterator.hasNext()) {
+            Obstacle obstacle = iterator.next();
+            if (player.getX() < obstacle.getX() + 50 &&
+                    player.getX() + 50 > obstacle.getX() &&
+                    player.getY() < obstacle.getY() + 50 &&
+                    player.getY() + 50 > obstacle.getY()) {
+                System.out.println("Collision Detected!");
+                resetGame();
+                break; // Exit the loop after a collision
+            }
+        }
+    }
+
+    private void resetGame() {
+        System.out.println("Game Over! Resetting game...");
+        score = 0;
+        obstacles.clear(); // Remove all obstacles
+        obstacles.add(new Obstacle(800, 390)); // Start with one obstacle again
+    }
+
     class GamePanel extends JPanel {
         private BufferedImage backgroundImage;
-        private Player player; // Reference to the player object
-        private Obstacle obstacle; // Reference to the obstacle object (if needed)
+        private Player player;
+        private List<Obstacle> obstacles;
 
-        public GamePanel(Player player, Obstacle obstacle) {
+        public GamePanel(Player player, List<Obstacle> obstacles) {
             this.player = player;
-            this.obstacle = obstacle;
+            this.obstacles = obstacles;
 
-            // Load the background image
             try {
                 backgroundImage = ImageIO.read(new File("assets/images/gameBg.png"));
             } catch (IOException e) {
@@ -60,53 +125,45 @@ public class GameWindow extends JFrame implements KeyListener {
 
         @Override
         protected void paintComponent(Graphics g) {
-            super.paintComponent(g); // Ensure the parent component is painted first
+            super.paintComponent(g);
 
-            // Draw the background image
             if (backgroundImage != null) {
                 g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
             }
 
-            // Draw the player at the player's current position with the current animation
-            // frame
-            Image playerImage = player.getCurrentImage(); // Get the current animation frame
+            Image playerImage = player.getCurrentImage();
             if (playerImage != null) {
-                g.drawImage(playerImage, player.getX(), player.getY(), null); // Draw the player at (x, y)
+                g.drawImage(playerImage, player.getX(), player.getY(), null);
             }
+
+            for (Obstacle obstacle : obstacles) {
+                Image obstacleImage = obstacle.getImage();
+                g.drawImage(obstacleImage, obstacle.getX(), obstacle.getY(), null);
+            }
+
+            g.drawString("Score: " + score, getWidth() - 100, 30);
         }
 
-        // Method to update and repaint the screen
         public void updateGamePanel() {
-            repaint(); // Repaint the panel to update the player’s position
+            repaint();
         }
     }
 
-    // KeyListener methods to capture keyboard input for player movement
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            player.setRight(true); // Start moving right
-        }
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            player.setLeft(true); // Start moving left
-        }
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            player.jump(); // Make the player jump when space is pressed
+            player.jump();
+            score++;
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            player.setRight(false); // Stop moving right
-        }
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            player.setLeft(false); // Stop moving left
-        }
+        // Handle key releases if needed
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // Not needed, but required by the KeyListener interface
+        // Not needed
     }
 }

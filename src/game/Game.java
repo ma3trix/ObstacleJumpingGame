@@ -1,32 +1,59 @@
 package game;
 
 import gui.GameWindow;
-import gui.GameKeyListener;
-import javax.swing.JFrame;
 
 public class Game {
     private Player player;
-    private Obstacle obstacle;
     private GameWindow gameWindow;
+    private boolean isRunning;
 
     public Game() {
-        // Initialize game components
+        // Initialize the player
         player = new Player();
-        obstacle = new Obstacle();
-        gameWindow = new GameWindow(player, obstacle);
-        
-        // Set up KeyListener
-        gameWindow.addKeyListener(new GameKeyListener(player));
+
+        // Create the game window (GameWindow handles rendering and obstacles)
+        gameWindow = new GameWindow(player);
+
+        // Start the game loop
+        isRunning = true;
+        startGameLoop();
     }
 
-    public void start() {
-        // Start the game loop or any initialization needed
-        gameWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameWindow.setSize(800, 600); // Set the desired size of the game window
-        gameWindow.setVisible(true); // Make the window visible
+    // Start the game loop
+    public void startGameLoop() {
+        // Main game loop
+        while (isRunning) {
+            // Update player movement
+            player.run();
+            player.applyGravity();
 
-        // Implement your game loop here, possibly using a timer
+            // Update obstacles and repaint game window
+            gameWindow.updateGameWindow();
+
+            // Control the frame rate (approximately 60 FPS)
+            try {
+                Thread.sleep(1000 / 60); // 60 frames per second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // Example: You can check for collisions here (optional)
+            // if (checkCollision()) {
+            // endGame(); // End the game if there's a collision
+            // }
+        }
     }
 
-    // You can add more methods here to manage game logic
+    // Method to end the game
+    public void endGame() {
+        isRunning = false;
+        System.out.println("Game Over!");
+    }
+
+    // Optional: Collision detection method (to be implemented)
+    public boolean checkCollision() {
+        // Collision detection logic between the player and obstacles
+        // Return true if there is a collision, otherwise return false
+        return false;
+    }
 }

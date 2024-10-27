@@ -47,12 +47,14 @@ public class GameWindow extends JFrame implements KeyListener {
     }
 
     public void updateGameWindow() {
-        for (Obstacle obstacle : obstacles) {
+        for (Iterator<Obstacle> iterator = obstacles.iterator(); iterator.hasNext();) {
+            Obstacle obstacle = iterator.next();
             obstacle.updatePosition();
+            if (obstacle.getX() < -50) { // Assuming obstacles go off screen when x < -50
+                iterator.remove(); // Safely remove the obstacle from the list
+            }
         }
-
         checkCollisions();
-
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastObstacleAddedTime > obstacleSpawnDelay) {
             if (obstacles.size() < 3) {
@@ -60,7 +62,6 @@ public class GameWindow extends JFrame implements KeyListener {
             }
             lastObstacleAddedTime = currentTime;
         }
-
         gamePanel.updateGamePanel();
     }
 

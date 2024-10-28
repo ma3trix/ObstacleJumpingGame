@@ -1,3 +1,5 @@
+![Obstacle Jumping Game Demo](https://github.com/ma3trix/ObstacleJumpingGame/blob/main/demo.gif?raw=true)
+
 # Obstacle Jumping Game
 
 ## Description

@@ -11,7 +11,7 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator; // Import Iterator
+import java.util.Iterator;
 import java.util.List;
 import game.Player;
 import game.Obstacle;
@@ -23,12 +23,12 @@ public class GameWindow extends JFrame implements KeyListener {
     private int minObstacleSpacing = 300;
     private long lastObstacleAddedTime;
     private long obstacleSpawnDelay = 3000;
-    private int score = 0;
+    private int score = 0; // Current score
+    private int highScore = 0; // High score tracking
 
     public GameWindow(Player player) {
         this.player = player;
 
-        // Start with only one obstacle
         obstacles = new ArrayList<>();
         obstacles.add(new Obstacle(800, 390));
 
@@ -50,11 +50,13 @@ public class GameWindow extends JFrame implements KeyListener {
         for (Iterator<Obstacle> iterator = obstacles.iterator(); iterator.hasNext();) {
             Obstacle obstacle = iterator.next();
             obstacle.updatePosition();
-            if (obstacle.getX() < -50) { // Assuming obstacles go off screen when x < -50
-                iterator.remove(); // Safely remove the obstacle from the list
+            if (obstacle.getX() < -50) {
+                iterator.remove();
             }
         }
+
         checkCollisions();
+
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastObstacleAddedTime > obstacleSpawnDelay) {
             if (obstacles.size() < 3) {
@@ -62,6 +64,7 @@ public class GameWindow extends JFrame implements KeyListener {
             }
             lastObstacleAddedTime = currentTime;
         }
+
         gamePanel.updateGamePanel();
     }
 
@@ -87,7 +90,7 @@ public class GameWindow extends JFrame implements KeyListener {
     }
 
     private void checkCollisions() {
-        Iterator<Obstacle> iterator = obstacles.iterator(); // Use Iterator to safely remove obstacles
+        Iterator<Obstacle> iterator = obstacles.iterator();
         while (iterator.hasNext()) {
             Obstacle obstacle = iterator.next();
             if (player.getX() < obstacle.getX() + 50 &&
@@ -95,17 +98,24 @@ public class GameWindow extends JFrame implements KeyListener {
                     player.getY() < obstacle.getY() + 50 &&
                     player.getY() + 50 > obstacle.getY()) {
                 System.out.println("Collision Detected!");
+                updateHighScore(); // Update high score if the player has beaten it
                 resetGame();
-                break; // Exit the loop after a collision
+                break;
             }
+        }
+    }
+
+    private void updateHighScore() {
+        if (score > highScore) {
+            highScore = score; // Update high score
         }
     }
 
     private void resetGame() {
         System.out.println("Game Over! Resetting game...");
         score = 0;
-        obstacles.clear(); // Remove all obstacles
-        obstacles.add(new Obstacle(800, 390)); // Start with one obstacle again
+        obstacles.clear();
+        obstacles.add(new Obstacle(800, 390));
     }
 
     class GamePanel extends JPanel {
@@ -142,7 +152,9 @@ public class GameWindow extends JFrame implements KeyListener {
                 g.drawImage(obstacleImage, obstacle.getX(), obstacle.getY(), null);
             }
 
+            // Display score and high score
             g.drawString("Score: " + score, getWidth() - 100, 30);
+            g.drawString("High Score: " + highScore, getWidth() - 100, 50);
         }
 
         public void updateGamePanel() {
@@ -154,7 +166,7 @@ public class GameWindow extends JFrame implements KeyListener {
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             player.jump();
-            score++;
+            score++; // Increase score after each jump
         }
     }
 
